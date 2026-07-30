@@ -9,16 +9,22 @@ export function AddGameModal({ onClose }: { onClose: () => void }) {
   const [platform, setPlatform] = useState<Platform>('other');
   const [coverUrl, setCoverUrl] = useState('');
   const [executablePath, setExecutablePath] = useState('');
+  const [category, setCategory] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
+    // In a full Tauri desktop build, we would use a Rust command to extract the .exe icon
+    // e.g. invoke('extract_icon', { path: executablePath }).then(setIcon)
+    const finalCoverUrl = coverUrl.trim();
+
     addGame({
       title: title.trim(),
       platform,
-      coverUrl: coverUrl.trim(),
+      coverUrl: finalCoverUrl,
       executablePath: executablePath.trim() || 'dummy://path',
+      category: category.trim() || 'Uncategorized',
     });
     onClose();
   };
@@ -64,6 +70,17 @@ export function AddGameModal({ onClose }: { onClose: () => void }) {
                 <option value="gog">GOG</option>
                 <option value="other">Other / Standalone</option>
               </select>
+            </div>
+            
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Category</label>
+              <input 
+                type="text" 
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder="e.g. RPG, Action"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
             </div>
           </div>
           

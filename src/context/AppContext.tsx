@@ -7,6 +7,7 @@ interface AppContextType {
   theme: Theme;
   activeSession: { game: Game; startTime: number } | null;
   addGame: (game: Omit<Game, 'id' | 'addedAt'>) => void;
+  updateGame: (id: string, updates: Partial<Game>) => void;
   removeGame: (id: string) => void;
   reorderGames: (newGames: Game[]) => void;
   setTheme: (theme: Theme) => void;
@@ -24,6 +25,8 @@ const defaultGames: Game[] = [
     coverUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=400',
     executablePath: 'C:\\Games\\Cyber\\launcher.exe',
     addedAt: Date.now() - 10000000,
+    category: 'RPG',
+    isFavorite: true,
   },
   {
     id: '2',
@@ -32,6 +35,7 @@ const defaultGames: Game[] = [
     coverUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=400',
     executablePath: 'steam://rungameid/12345',
     addedAt: Date.now() - 5000000,
+    category: 'Action',
   },
   {
     id: '3',
@@ -40,6 +44,7 @@ const defaultGames: Game[] = [
     coverUrl: 'https://images.unsplash.com/photo-1585504198199-20277593b94f?auto=format&fit=crop&q=80&w=400',
     executablePath: 'com.epicgames.launcher://apps/blockbuilder',
     addedAt: Date.now() - 1000000,
+    category: 'Simulation',
   }
 ];
 
@@ -81,6 +86,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addedAt: Date.now(),
     };
     setGames((prev) => [...prev, newGame]);
+  };
+
+  const updateGame = (id: string, updates: Partial<Game>) => {
+    setGames((prev) => prev.map((g) => (g.id === id ? { ...g, ...updates } : g)));
   };
 
   const removeGame = (id: string) => {
@@ -129,6 +138,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         theme,
         activeSession,
         addGame,
+        updateGame,
         removeGame,
         reorderGames,
         setTheme,

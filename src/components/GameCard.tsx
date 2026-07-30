@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, MoreVertical, X } from 'lucide-react';
+import { Play, MoreVertical, X, Star } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Game } from '../types';
@@ -9,10 +9,11 @@ import { useAppContext } from '../context/AppContext';
 interface GameCardProps {
   game: Game;
   totalPlaytime: number;
+  disabled?: boolean;
 }
 
-export const GameCard: React.FC<GameCardProps> = ({ game, totalPlaytime }) => {
-  const { startGame, removeGame } = useAppContext();
+export const GameCard: React.FC<GameCardProps> = ({ game, totalPlaytime, disabled }) => {
+  const { startGame, removeGame, updateGame } = useAppContext();
   
   const {
     attributes,
@@ -21,12 +22,17 @@ export const GameCard: React.FC<GameCardProps> = ({ game, totalPlaytime }) => {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: game.id });
+  } = useSortable({ id: game.id, disabled });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 10 : 1,
+  };
+
+  const toggleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    updateGame(game.id, { isFavorite: !game.isFavorite });
   };
 
   return (
@@ -58,13 +64,23 @@ export const GameCard: React.FC<GameCardProps> = ({ game, totalPlaytime }) => {
         
         <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
         
-        <button
-          onClick={(e) => { e.stopPropagation(); removeGame(game.id); }}
-          className="absolute right-2 top-2 rounded-full bg-background/80 p-1.5 text-foreground opacity-0 backdrop-blur-sm transition-all hover:bg-destructive hover:text-destructive-foreground group-hover:opacity-100"
-          title="Remove Game"
-        >
-          <X size={14} />
-        </button>
+        <div className="absolute right-2 top-2 flex flex-col gap-2 opacity-0 transition-all group-hover:opacity-100">
+          <button
+            onClick={toggleFavorite}
+            className="rounded-full bg-background/80 p-1.5 text-foreground backdrop-blur-sm transition-all hover:bg-yellow-500/20 hover:text-yellow-500"
+            title={game.isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+          >
+            <Star size={14} className={cn(game.isFavorite && "fill-yellow-500 text-yellow-500")} />
+          </button>
+          
+          <button
+            onClick={(e) => { e.stopPropagation(); removeGame(game.id); }}
+            className="rounded-full bg-background/80 p-1.5 text-foreground backdrop-blur-sm transition-all hover:bg-destructive hover:text-destructive-foreground"
+            title="Remove Game"
+          >
+            <X size={14} />
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col gap-2 p-4">

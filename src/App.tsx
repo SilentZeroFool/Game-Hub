@@ -46,14 +46,25 @@ function Dashboard() {
             {currentTab === 'library' && <GameGrid />}
             {currentTab === 'stats' && <StatsDashboard />}
             {currentTab === 'settings' && (
-              <div className="rounded-xl border border-border/50 bg-card p-8 shadow-sm">
-                <h3 className="text-lg font-semibold mb-4">About This Application</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  This is a prototype web interface for a centralized game launcher. Because it is running in a browser environment, true executable launching (e.g., .exe, steam://) is simulated via the Active Session modal, which tracks your "playtime" locally using browser storage.
-                </p>
-                <p className="text-muted-foreground leading-relaxed mt-4">
-                  To build a true desktop application that can launch executables on the host machine, this React frontend is designed to be wrapped using the <strong>Tauri</strong> framework locally on your desktop.
-                </p>
+              <div className="rounded-xl border border-border/50 bg-card p-8 shadow-sm space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">About This Application</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    This is a prototype web interface for a centralized game launcher. Because it is running in a browser environment, true executable launching (e.g., .exe, steam://) is simulated via the Active Session modal, which tracks your "playtime" locally using browser storage.
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed mt-4">
+                    To build a true desktop application that can launch executables on the host machine, this React frontend is designed to be wrapped using the <strong>Tauri</strong> framework locally on your desktop.
+                  </p>
+                </div>
+
+                <div className="pt-6 border-t border-border/50">
+                  <h3 className="text-lg font-semibold mb-2">Desktop Integration Features</h3>
+                  <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                    <li><strong>Icon Extraction:</strong> In the desktop build, the app would automatically extract the icon from the provided executable path.</li>
+                    <li><strong>Native Launching:</strong> The "Play" button would execute the actual game on your machine via Tauri shell commands.</li>
+                    <li><strong>Process Tracking:</strong> Playtime would be tracked by monitoring the running process rather than a manual stop button.</li>
+                  </ul>
+                </div>
               </div>
             )}
           </div>

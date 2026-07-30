@@ -8,6 +8,8 @@ export interface Game {
   coverUrl: string;
   executablePath: string;
   addedAt: number;
+  isFavorite?: boolean;
+  category?: string;
 }
 
 export interface PlaySession {
