@@ -1,19 +1,39 @@
+// Prevents additional console window on Windows in release, DO NOT REMOVE!!
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use std::process::Command;
 use std::path::Path;
+use std::fs::OpenOptions;
+use std::io::Write;
+
+fn append_log(msg: &str) {
+  if let Some(mut p) = tauri::api::path::app_config_dir() {
+    p.push("game-hub-debug.log");
+    if let Ok(mut f) = OpenOptions::new().create(true).append(true).open(p) {
+      let _ = writeln!(f, "{}", msg);
+    }
+  }
+}
 
 #[tauri::command]
 fn run_game(path: String) -> Result<(), String> {
+  append_log(&format!("run_game called with '{}'", path));
   let p = Path::new(&path);
   if !p.exists() {
+    append_log("exe not found");
     return Err(format!("Exe not found: {}", path));
   }
-  // Use the exe's folder as working directory so relative resources work
   let dir = p.parent().unwrap_or_else(|| Path::new("."));
-  Command::new(&path)
-    .current_dir(dir)
-    .spawn()
-    .map_err(|e| format!("Failed to spawn '{}': {}", path, e))?;
-  Ok(())
+  match Command::new(&path).current_dir(dir).spawn() {
+    Ok(_) => {
+      append_log(&format!("spawned '{}'", path));
+      Ok(())
+    }
+    Err(e) => {
+      append_log(&format!("spawn error for '{}': {}", path, e));
+      Err(format!("Failed to spawn '{}': {}", path, e))
+    }
+  }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
