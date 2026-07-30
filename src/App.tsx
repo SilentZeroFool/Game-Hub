@@ -58,12 +58,17 @@ function Dashboard() {
                 </div>
 
                 <div className="pt-6 border-t border-border/50">
-                  <h3 className="text-lg font-semibold mb-2">Desktop Integration Features</h3>
-                  <ul className="list-disc list-inside text-muted-foreground space-y-2">
-                    <li><strong>Icon Extraction:</strong> In the desktop build, the app would automatically extract the icon from the provided executable path.</li>
-                    <li><strong>Native Launching:</strong> The "Play" button would execute the actual game on your machine via Tauri shell commands.</li>
-                    <li><strong>Process Tracking:</strong> Playtime would be tracked by monitoring the running process rather than a manual stop button.</li>
-                  </ul>
+                  <h3 className="text-lg font-semibold mb-2">How to test locally</h3>
+                  <p className="text-muted-foreground leading-relaxed mb-4">
+                    Since the GitHub Actions workflow dynamically generates the Tauri configuration to ensure the latest compatible setup, you can test it locally by running:
+                  </p>
+                  <pre className="bg-secondary/50 p-4 rounded-lg text-sm font-mono overflow-x-auto text-secondary-foreground border border-border/50">
+                    <code>
+                      npx tauri init --app-name 'GameHub' --window-title 'Game Hub' --frontend-dist '../dist' --dev-url 'http://localhost:3000' --before-build-command 'npm run build' --before-dev-command 'npm run dev'<br/>
+                      <br/>
+                      npm run tauri dev
+                    </code>
+                  </pre>
                 </div>
               </div>
             )}

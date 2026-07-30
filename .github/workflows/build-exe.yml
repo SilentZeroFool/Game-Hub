@@ -1,47 +1,70 @@
-name: Build Tauri App
+name: Build Windows Executables (.exe)
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
-  build:
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [macos-latest, ubuntu-22.04, windows-latest]
-
-    runs-on: ${{ matrix.platform }}
+  build-tauri:
+    runs-on: windows-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: setup node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
-      - name: install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-22.04'
+      - name: Clean npm artifacts (workaround for npm optional deps bug)
+        if: runner.os == 'Windows'
+        shell: pwsh
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+          Write-Host "Removing node_modules and package-lock.json (workaround for npm optional deps bug)..."
+          if (Test-Path node_modules) { Remove-Item -Recurse -Force node_modules }
+          if (Test-Path package-lock.json) { Remove-Item -Force package-lock.json }
 
-      - name: install frontend dependencies
+      - name: Install dependencies
         run: npm install
 
-      - name: build frontend
+      - name: Ensure rollup native binary (optional)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          try {
+            npm install --no-save @rollup/rollup-win32-x64-msvc
+          } catch {
+            Write-Host "Optional rollup binary install failed or not available; continuing..."
+          }
+
+      - name: Build web application
         run: npm run build
 
-      - name: build tauri app
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
         with:
-          tauriScript: npx tauri
-          args: ''
+          targets: x86_64-pc-windows-msvc
+
+      - name: Setup Tauri and Build
+        shell: pwsh
+        run: |
+          # remove previous src-tauri directory if present
+          Remove-Item -Recurse -Force src-tauri -ErrorAction SilentlyContinue
+
+          # initialize tauri (use single-quoted CLI args to avoid nested quote problems)
+          npx tauri init --app-name 'GameHub' --window-title 'Game Hub' --frontend-dist '../dist' --dev-url 'http://localhost:3000' --before-build-command 'npm run build' --before-dev-command 'npm run dev'
+
+          # edit tauri.conf.json reliably using node
+          node -e 'const fs = require("fs"); const f = "src-tauri/tauri.conf.json"; let c = fs.readFileSync(f, "utf8"); c = c.replace(/com\.tauri\.dev/g, "com.gamehub.app"); fs.writeFileSync(f, c);'
+
+          # build the Tauri app
+          npx tauri build
+
+      - name: Upload Tauri Windows .exe Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GameHub-Tauri-Exe
+          path: |
+            src-tauri/target/release/bundle/*/*
+            src-tauri/target/release/*.exe
