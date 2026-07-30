@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { X, Gamepad2, FolderOpen } from 'lucide-react';
 import { Platform, Game } from '../types';
 import { useAppContext } from '../context/AppContext';
-import { open } from '@tauri-apps/plugin-dialog';
-import { isTauri } from '@tauri-apps/api/core';
 
 export function GameModal({ onClose, gameToEdit }: { onClose: () => void; gameToEdit?: Game }) {
   const { addGame, updateGame } = useAppContext();
@@ -25,17 +23,27 @@ export function GameModal({ onClose, gameToEdit }: { onClose: () => void; gameTo
 
   const handleBrowse = async () => {
     try {
-      if (isTauri()) {
-        const selected = await open({
-          multiple: false,
-          filters: [{
-            name: 'Executables',
-            extensions: ['exe', 'app', 'sh', 'bat', 'cmd']
-          }]
-        });
-        
-        if (selected && typeof selected === 'string') {
-          setExecutablePath(selected);
+      // Detect Tauri environment without static imports
+      const core = await import('@tauri-apps/api/core').catch(() => null);
+      const isTauriEnv = core?.isTauri ? core.isTauri : !!(window as any).__TAURI__;
+
+      if (isTauriEnv) {
+        // Dynamically import the dialog plugin at runtime
+        const dialog = await import('@tauri-apps/plugin-dialog').catch(() => null);
+        if (dialog?.open) {
+          const selected = await dialog.open({
+            multiple: false,
+            filters: [{
+              name: 'Executables',
+              extensions: ['exe', 'app', 'sh', 'bat', 'cmd']
+            }]
+          });
+
+          if (selected && typeof selected === 'string') {
+            setExecutablePath(selected);
+          }
+        } else {
+          console.warn('Dialog plugin not available at runtime.');
         }
       } else {
         alert("File browsing is only available in the Tauri desktop application.");
@@ -146,7 +154,7 @@ export function GameModal({ onClose, gameToEdit }: { onClose: () => void; gameTo
                 type="text" 
                 value={executablePath}
                 onChange={(e) => setExecutablePath(e.target.value)}
-                placeholder="C:\Games\..."
+                placeholder="C:\\Games\\..."
                 className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
               <button
