@@ -56,7 +56,7 @@ jobs:
           npx tauri init --app-name 'GameHub' --window-title 'Game Hub' --frontend-dist '../dist' --dev-url 'http://localhost:3000' --before-build-command 'npm run build' --before-dev-command 'npm run dev'
 
           # edit tauri.conf.json reliably using node
-          node -e 'const fs = require("fs"); const f = "src-tauri/tauri.conf.json"; let c = fs.readFileSync(f, "utf8"); c = c.replace(/com\.tauri\.dev/g, "com.gamehub.app"); fs.writeFileSync(f, c);'
+          node -e 'const fs = require("fs"); const f = "src-tauri/tauri.conf.json"; let c = fs.readFileSync(f, "utf8"); c = c.replace(/com\.tauri\.dev/g, "com.gamehub.app"); let conf = JSON.parse(c); conf.plugins = conf.plugins || {}; conf.plugins.shell = conf.plugins.shell || {}; conf.plugins.shell.open = true; fs.writeFileSync(f, JSON.stringify(conf, null, 2));'
 
           # add plugins
           npx tauri add dialog

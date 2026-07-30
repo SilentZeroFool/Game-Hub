@@ -3,9 +3,11 @@ import { Loader2, Square } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { formatDuration } from '../lib/utils';
 import { open } from '@tauri-apps/plugin-shell';
+import { isTauri } from '@tauri-apps/api/core';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 
 export function ActiveSessionModal() {
-  const { activeSession, stopGame } = useAppContext();
+  const { activeSession, stopGame, userSettings } = useAppContext();
   const [elapsed, setElapsed] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
   const processRef = useRef<any>(null);
@@ -23,18 +25,21 @@ export function ActiveSessionModal() {
     const launchGame = async () => {
       try {
         // Check if running in Tauri environment
-        if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+        if (isTauri()) {
           const exePath = activeSession.game.executablePath;
           if (exePath && exePath !== 'dummy://path') {
             // Using open from @tauri-apps/plugin-shell acts like double-clicking the file.
             await open(exePath);
+            if (userSettings.closeOnLaunch) {
+              await getCurrentWindow().minimize();
+            }
           } else {
             setErrorMsg('Invalid executable path provided.');
           }
         }
       } catch (err) {
         console.error('Failed to launch game:', err);
-        if (isMounted) setErrorMsg('Failed to launch the game. Ensure path is correct.');
+        if (isMounted) setErrorMsg(`Failed to launch: ${err instanceof Error ? err.message : String(err)}`);
       }
     };
 

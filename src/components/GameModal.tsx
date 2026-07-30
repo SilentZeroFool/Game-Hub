@@ -3,6 +3,7 @@ import { X, Gamepad2, FolderOpen } from 'lucide-react';
 import { Platform, Game } from '../types';
 import { useAppContext } from '../context/AppContext';
 import { open } from '@tauri-apps/plugin-dialog';
+import { isTauri } from '@tauri-apps/api/core';
 
 export function GameModal({ onClose, gameToEdit }: { onClose: () => void; gameToEdit?: Game }) {
   const { addGame, updateGame } = useAppContext();
@@ -24,7 +25,7 @@ export function GameModal({ onClose, gameToEdit }: { onClose: () => void; gameTo
 
   const handleBrowse = async () => {
     try {
-      if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+      if (isTauri()) {
         const selected = await open({
           multiple: false,
           filters: [{
