@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Loader2, Square } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { formatDuration } from '../lib/utils';
-import { invoke } from '@tauri-apps/api/tauri';
 import { isTauri } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 
@@ -28,7 +27,8 @@ export function ActiveSessionModal() {
         if (isTauri()) {
           const exePath = activeSession.game.executablePath;
           if (exePath && exePath !== 'dummy://path') {
-            // Invoke the backend Rust command to spawn the process
+            // Dynamically import the Tauri API so bundlers don't try to resolve it at build-time for web
+            const { invoke } = await import('@tauri-apps/api/tauri');
             await invoke('run_game', { path: exePath });
             if (userSettings.closeOnLaunch) {
               await getCurrentWindow().minimize();
@@ -36,6 +36,8 @@ export function ActiveSessionModal() {
           } else {
             setErrorMsg('Invalid executable path provided.');
           }
+        } else {
+          setErrorMsg('Launching is only supported in the Tauri desktop application.');
         }
       } catch (err: any) {
         console.error('Failed to launch game:', err);
