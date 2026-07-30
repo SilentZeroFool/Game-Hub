@@ -2,8 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Loader2, Square } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { formatDuration } from '../lib/utils';
-import { isTauri } from '@tauri-apps/api/core';
-import { getCurrentWindow } from '@tauri-apps/api/window';
 
 export function ActiveSessionModal() {
   const { activeSession, stopGame, userSettings } = useAppContext();
@@ -23,14 +21,22 @@ export function ActiveSessionModal() {
 
     const launchGame = async () => {
       try {
-        // Check if running in Tauri environment
-        if (isTauri()) {
+        // Detect Tauri environment without static imports
+        const core = await import('@tauri-apps/api/core').catch(() => null);
+        const isTauriEnv = core?.isTauri ? core.isTauri : !!(window as any).__TAURI__;
+
+        if (isTauriEnv) {
           const exePath = activeSession.game.executablePath;
           if (exePath && exePath !== 'dummy://path') {
-            // Dynamically import the Tauri API so bundlers don't try to resolve it at build-time for web
-            const { invoke } = await import('@tauri-apps/api/tauri');
+            const [{ invoke }, windowApi] = await Promise.all([
+              import('@tauri-apps/api/tauri'),
+              import('@tauri-apps/api/window').catch(() => null),
+            ]);
+
             await invoke('run_game', { path: exePath });
-            if (userSettings.closeOnLaunch) {
+
+            if (userSettings.closeOnLaunch && windowApi?.getCurrentWindow) {
+              const { getCurrentWindow } = windowApi;
               await getCurrentWindow().minimize();
             }
           } else {
