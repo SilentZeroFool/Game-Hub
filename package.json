@@ -19,6 +19,7 @@
     "@tailwindcss/vite": "^4.1.14",
     "@tauri-apps/plugin-dialog": "^2.7.2",
     "@tauri-apps/plugin-shell": "^2.3.5",
+    "@tauri-apps/api": "^2.11.1",
     "@vitejs/plugin-react": "^5.0.4",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
@@ -33,7 +34,6 @@
     "vite": "^6.2.3"
   },
   "devDependencies": {
-    "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/cli": "^2.11.4",
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
