@@ -16,7 +16,8 @@ export default defineConfig(() => {
       include: [
         '@tauri-apps/api/tauri',
         '@tauri-apps/api/window',
-        '@tauri-apps/api/core'
+        '@tauri-apps/api/core',
+        '@tauri-apps/api/dialog'
       ]
     },
     ssr: {
@@ -28,7 +29,8 @@ export default defineConfig(() => {
           '@tauri-apps/api',
           '@tauri-apps/api/tauri',
           '@tauri-apps/api/window',
-          '@tauri-apps/api/core'
+          '@tauri-apps/api/core',
+          '@tauri-apps/api/dialog'
         ]
       }
     },
