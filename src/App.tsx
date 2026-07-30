@@ -114,9 +114,15 @@ function Dashboard() {
                       <code>
                         npx tauri init --app-name 'GameHub' --window-title 'Game Hub' --frontend-dist '../dist' --dev-url 'http://localhost:3000' --before-build-command 'npm run build' --before-dev-command 'npm run dev'<br/>
                         <br/>
+                        npx tauri add dialog<br/>
+                        npx tauri add shell<br/>
+                        <br/>
                         npm run tauri dev
                       </code>
                     </pre>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Note: You must also edit <code>src-tauri/capabilities/default.json</code> to include <code>{`{ "identifier": "shell:allow-open", "allow": [{ "path": "**" }] }`}</code> in the permissions array to allow launching executables.
+                    </p>
                   </div>
                 </div>
               </div>

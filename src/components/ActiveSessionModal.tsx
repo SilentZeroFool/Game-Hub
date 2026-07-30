@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Loader2, Square } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { formatDuration } from '../lib/utils';
-import { Command } from '@tauri-apps/plugin-shell';
+import { open } from '@tauri-apps/plugin-shell';
 
 export function ActiveSessionModal() {
   const { activeSession, stopGame } = useAppContext();
@@ -26,18 +26,8 @@ export function ActiveSessionModal() {
         if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
           const exePath = activeSession.game.executablePath;
           if (exePath && exePath !== 'dummy://path') {
-            const cmd = Command.create('run-game', [exePath]); // Need configuration in tauri.conf.json for this to work perfectly, but we'll try direct execution
-            // Actually, in Tauri v2, we should use Command.create directly if configured, or just open
-            const result = await Command.create('cmd', ['/C', 'start', '""', exePath]).spawn().catch(() => 
-              Command.create('sh', ['-c', `open "${exePath}" || xdg-open "${exePath}"`]).spawn()
-            );
-            
-            if (isMounted) {
-              processRef.current = result;
-              // If we could properly hook into process exit, we'd stop the game automatically here.
-              // For now, we still rely on the user clicking "Stop" to record playtime, 
-              // as detached processes (like game launchers) often exit immediately anyway.
-            }
+            // Using open from @tauri-apps/plugin-shell acts like double-clicking the file.
+            await open(exePath);
           } else {
             setErrorMsg('Invalid executable path provided.');
           }
