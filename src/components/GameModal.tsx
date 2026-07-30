@@ -3,6 +3,17 @@ import { X, Gamepad2, FolderOpen } from 'lucide-react';
 import { Platform, Game } from '../types';
 import { useAppContext } from '../context/AppContext';
 
+async function detectTauri(): Promise<boolean> {
+  try {
+    if (typeof (window as any).__TAURI__ !== 'undefined') return true;
+    if (typeof navigator !== 'undefined' && /Tauri/i.test(navigator.userAgent)) return true;
+    const core = await import('@tauri-apps/api/core').catch(() => null);
+    return !!core?.isTauri;
+  } catch {
+    return false;
+  }
+}
+
 export function GameModal({ onClose, gameToEdit }: { onClose: () => void; gameToEdit?: Game }) {
   const { addGame, updateGame } = useAppContext();
   const [title, setTitle] = useState(gameToEdit?.title || '');
@@ -23,33 +34,37 @@ export function GameModal({ onClose, gameToEdit }: { onClose: () => void; gameTo
 
   const handleBrowse = async () => {
     try {
-      // Detect Tauri environment without static imports
-      const core = await import('@tauri-apps/api/core').catch(() => null);
-      const isTauriEnv = core?.isTauri ? core.isTauri : !!(window as any).__TAURI__;
+      const isTauriEnv = await detectTauri();
 
       if (isTauriEnv) {
-        // Dynamically import the dialog plugin at runtime
-        const dialog = await import('@tauri-apps/plugin-dialog').catch(() => null);
-        if (dialog?.open) {
-          const selected = await dialog.open({
+        // Use the front-end API package for dialogs in renderer
+        const dialogModule = await import('@tauri-apps/api/dialog').catch(() => null);
+        const openFn = dialogModule?.open ?? dialogModule?.default?.open ?? (dialogModule as any)?.open;
+
+        if (typeof openFn === 'function') {
+          const selected = await openFn({
             multiple: false,
-            filters: [{
-              name: 'Executables',
-              extensions: ['exe', 'app', 'sh', 'bat', 'cmd']
-            }]
+            filters: [
+              {
+                name: 'Executables',
+                extensions: ['exe', 'app', 'sh', 'bat', 'cmd'],
+              },
+            ],
           });
 
           if (selected && typeof selected === 'string') {
             setExecutablePath(selected);
           }
         } else {
-          console.warn('Dialog plugin not available at runtime.');
+          console.warn('Dialog API not available at runtime.');
+          alert('File browsing is not available (dialog API missing).');
         }
       } else {
-        alert("File browsing is only available in the Tauri desktop application.");
+        alert('File browsing is only available in the Tauri desktop application.');
       }
     } catch (err) {
-      console.error("Failed to open dialog:", err);
+      console.error('Failed to open dialog:', err);
+      alert('Failed to open dialog. See console for details.');
     }
   };
 
@@ -57,8 +72,6 @@ export function GameModal({ onClose, gameToEdit }: { onClose: () => void; gameTo
     e.preventDefault();
     if (!title.trim()) return;
 
-    // In a full Tauri desktop build, we would use a Rust command to extract the .exe icon
-    // e.g. invoke('extract_icon', { path: executablePath }).then(setIcon)
     const finalCoverUrl = coverUrl.trim();
 
     if (gameToEdit) {
