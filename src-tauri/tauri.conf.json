@@ -36,5 +36,13 @@
     "android": {
       "debugApplicationIdSuffix": ".debug"
     }
+  },
+
+  "tauri": {
+    "allowlist": {
+      "fs": { "all": true },
+      "process": { "all": false, "spawn": true },
+      "shell": { "all": false, "open": true }
+    }
   }
 }
