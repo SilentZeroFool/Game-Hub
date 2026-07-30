@@ -58,6 +58,10 @@ jobs:
           # edit tauri.conf.json reliably using node
           node -e 'const fs = require("fs"); const f = "src-tauri/tauri.conf.json"; let c = fs.readFileSync(f, "utf8"); c = c.replace(/com\.tauri\.dev/g, "com.gamehub.app"); fs.writeFileSync(f, c);'
 
+          # add plugins
+          npx tauri add dialog
+          npx tauri add shell
+
           # build the Tauri app
           npx tauri build
 

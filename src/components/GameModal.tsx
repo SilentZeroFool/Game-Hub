@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Gamepad2 } from 'lucide-react';
+import { X, Gamepad2, FolderOpen } from 'lucide-react';
 import { Platform, Game } from '../types';
 import { useAppContext } from '../context/AppContext';
+import { open } from '@tauri-apps/plugin-dialog';
 
 export function GameModal({ onClose, gameToEdit }: { onClose: () => void; gameToEdit?: Game }) {
   const { addGame, updateGame } = useAppContext();
@@ -20,6 +21,28 @@ export function GameModal({ onClose, gameToEdit }: { onClose: () => void; gameTo
       setCategory(gameToEdit.category || '');
     }
   }, [gameToEdit]);
+
+  const handleBrowse = async () => {
+    try {
+      if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+        const selected = await open({
+          multiple: false,
+          filters: [{
+            name: 'Executables',
+            extensions: ['exe', 'app', 'sh', 'bat', 'cmd']
+          }]
+        });
+        
+        if (selected && typeof selected === 'string') {
+          setExecutablePath(selected);
+        }
+      } else {
+        alert("File browsing is only available in the Tauri desktop application.");
+      }
+    } catch (err) {
+      console.error("Failed to open dialog:", err);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,21 +140,31 @@ export function GameModal({ onClose, gameToEdit }: { onClose: () => void; gameTo
 
           <div className="space-y-1">
             <label className="text-sm font-medium">Executable Path (Optional)</label>
-            <input 
-              type="text" 
-              value={executablePath}
-              onChange={(e) => setExecutablePath(e.target.value)}
-              placeholder="C:\Games\..."
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-            <p className="text-xs text-muted-foreground mt-1">In this web prototype, launching is simulated.</p>
+            <div className="flex gap-2">
+              <input 
+                type="text" 
+                value={executablePath}
+                onChange={(e) => setExecutablePath(e.target.value)}
+                placeholder="C:\Games\..."
+                className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              <button
+                type="button"
+                onClick={handleBrowse}
+                className="flex items-center gap-2 rounded-md bg-secondary px-3 py-2 text-sm font-medium hover:bg-secondary/80 transition-colors"
+                title="Browse for executable"
+              >
+                <FolderOpen size={16} />
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">In this web prototype, launching is simulated. In the Tauri desktop build, it will launch the game.</p>
           </div>
 
           <button 
             type="submit"
             className="w-full rounded-md bg-primary py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 mt-4"
           >
-            Add Game
+            {gameToEdit ? 'Save Changes' : 'Add Game'}
           </button>
         </form>
       </div>
