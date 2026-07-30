@@ -1,0 +1,6 @@
+{
+  "name": "Game Hub Prototype",
+  "description": "A centralized game launcher dashboard with playtime tracking, themes, and drag-and-drop organization.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
