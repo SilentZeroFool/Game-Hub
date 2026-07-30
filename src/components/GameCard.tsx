@@ -13,7 +13,7 @@ interface GameCardProps {
 }
 
 export const GameCard: React.FC<GameCardProps> = ({ game, totalPlaytime, disabled }) => {
-  const { startGame, removeGame, updateGame } = useAppContext();
+  const { startGame, removeGame, updateGame, setEditingGame, userSettings } = useAppContext();
   
   const {
     attributes,
@@ -72,6 +72,14 @@ export const GameCard: React.FC<GameCardProps> = ({ game, totalPlaytime, disable
           >
             <Star size={14} className={cn(game.isFavorite && "fill-yellow-500 text-yellow-500")} />
           </button>
+
+          <button
+            onClick={(e) => { e.stopPropagation(); setEditingGame(game); }}
+            className="rounded-full bg-background/80 p-1.5 text-foreground backdrop-blur-sm transition-all hover:bg-primary hover:text-primary-foreground"
+            title="Edit Game"
+          >
+            <MoreVertical size={14} />
+          </button>
           
           <button
             onClick={(e) => { e.stopPropagation(); removeGame(game.id); }}
@@ -92,7 +100,9 @@ export const GameCard: React.FC<GameCardProps> = ({ game, totalPlaytime, disable
           <span className="capitalize px-2 py-0.5 rounded-full bg-secondary/50 font-medium">
             {game.platform}
           </span>
-          <span>{formatDuration(totalPlaytime)}</span>
+          {userSettings.showPlaytimeOnCard && (
+            <span>{formatDuration(totalPlaytime)}</span>
+          )}
         </div>
 
         <button

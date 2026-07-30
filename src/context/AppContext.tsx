@@ -1,18 +1,22 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Game, PlaySession, Theme } from '../types';
+import { Game, PlaySession, Theme, UserSettings } from '../types';
 
 interface AppContextType {
   games: Game[];
   sessions: PlaySession[];
   theme: Theme;
+  userSettings: UserSettings;
   activeSession: { game: Game; startTime: number } | null;
   addGame: (game: Omit<Game, 'id' | 'addedAt'>) => void;
   updateGame: (id: string, updates: Partial<Game>) => void;
   removeGame: (id: string) => void;
   reorderGames: (newGames: Game[]) => void;
   setTheme: (theme: Theme) => void;
+  updateUserSettings: (settings: Partial<UserSettings>) => void;
   startGame: (gameId: string) => void;
   stopGame: () => void;
+  editingGame: Game | null;
+  setEditingGame: (game: Game | null) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -64,7 +68,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved || 'dark';
   });
 
+  const [userSettings, setUserSettingsState] = useState<UserSettings>(() => {
+    const saved = localStorage.getItem('launcher_settings');
+    return saved ? JSON.parse(saved) : {
+      closeOnLaunch: false,
+      startWithWindows: false,
+      showPlaytimeOnCard: true,
+    };
+  });
+
   const [activeSession, setActiveSession] = useState<{ game: Game; startTime: number } | null>(null);
+  const [editingGame, setEditingGame] = useState<Game | null>(null);
 
   useEffect(() => {
     localStorage.setItem('launcher_games', JSON.stringify(games));
@@ -78,6 +92,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('launcher_theme', theme);
     document.documentElement.className = theme;
   }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem('launcher_settings', JSON.stringify(userSettings));
+  }, [userSettings]);
 
   const addGame = (gameData: Omit<Game, 'id' | 'addedAt'>) => {
     const newGame: Game = {
@@ -102,6 +120,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
+  };
+
+  const updateUserSettings = (settings: Partial<UserSettings>) => {
+    setUserSettingsState((prev) => ({ ...prev, ...settings }));
   };
 
   const startGame = (gameId: string) => {
@@ -136,14 +158,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         games,
         sessions,
         theme,
+        userSettings,
         activeSession,
         addGame,
         updateGame,
         removeGame,
         reorderGames,
         setTheme,
+        updateUserSettings,
         startGame,
         stopGame,
+        editingGame,
+        setEditingGame,
       }}
     >
       {children}

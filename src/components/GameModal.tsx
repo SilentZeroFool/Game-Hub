@@ -1,15 +1,25 @@
-import React, { useState } from 'react';
-import { X, Gamepad2, Search } from 'lucide-react';
-import { Platform } from '../types';
+import React, { useState, useEffect } from 'react';
+import { X, Gamepad2 } from 'lucide-react';
+import { Platform, Game } from '../types';
 import { useAppContext } from '../context/AppContext';
 
-export function AddGameModal({ onClose }: { onClose: () => void }) {
-  const { addGame } = useAppContext();
-  const [title, setTitle] = useState('');
-  const [platform, setPlatform] = useState<Platform>('other');
-  const [coverUrl, setCoverUrl] = useState('');
-  const [executablePath, setExecutablePath] = useState('');
-  const [category, setCategory] = useState('');
+export function GameModal({ onClose, gameToEdit }: { onClose: () => void; gameToEdit?: Game }) {
+  const { addGame, updateGame } = useAppContext();
+  const [title, setTitle] = useState(gameToEdit?.title || '');
+  const [platform, setPlatform] = useState<Platform>(gameToEdit?.platform || 'other');
+  const [coverUrl, setCoverUrl] = useState(gameToEdit?.coverUrl || '');
+  const [executablePath, setExecutablePath] = useState(gameToEdit?.executablePath || '');
+  const [category, setCategory] = useState(gameToEdit?.category || '');
+
+  useEffect(() => {
+    if (gameToEdit) {
+      setTitle(gameToEdit.title);
+      setPlatform(gameToEdit.platform);
+      setCoverUrl(gameToEdit.coverUrl);
+      setExecutablePath(gameToEdit.executablePath);
+      setCategory(gameToEdit.category || '');
+    }
+  }, [gameToEdit]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,13 +29,23 @@ export function AddGameModal({ onClose }: { onClose: () => void }) {
     // e.g. invoke('extract_icon', { path: executablePath }).then(setIcon)
     const finalCoverUrl = coverUrl.trim();
 
-    addGame({
-      title: title.trim(),
-      platform,
-      coverUrl: finalCoverUrl,
-      executablePath: executablePath.trim() || 'dummy://path',
-      category: category.trim() || 'Uncategorized',
-    });
+    if (gameToEdit) {
+      updateGame(gameToEdit.id, {
+        title: title.trim(),
+        platform,
+        coverUrl: finalCoverUrl,
+        executablePath: executablePath.trim() || 'dummy://path',
+        category: category.trim() || 'Uncategorized',
+      });
+    } else {
+      addGame({
+        title: title.trim(),
+        platform,
+        coverUrl: finalCoverUrl,
+        executablePath: executablePath.trim() || 'dummy://path',
+        category: category.trim() || 'Uncategorized',
+      });
+    }
     onClose();
   };
 

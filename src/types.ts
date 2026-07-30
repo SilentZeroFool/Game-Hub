@@ -20,6 +20,12 @@ export interface PlaySession {
   duration: number; // in seconds
 }
 
+export interface UserSettings {
+  closeOnLaunch: boolean;
+  startWithWindows: boolean;
+  showPlaytimeOnCard: boolean;
+}
+
 export interface AppState {
   games: Game[];
   sessions: PlaySession[];
