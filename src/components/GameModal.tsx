@@ -38,7 +38,7 @@ export function GameModal({ onClose, gameToEdit }: { onClose: () => void; gameTo
 
       if (isTauriEnv) {
         // Use the front-end API package for dialogs in renderer
-        const dialogModule = await import('@tauri-apps/api/dialog').catch(() => null);
+        const dialogModule = await import('@tauri-apps/plugin-dialog').catch(() => null);
         const openFn = dialogModule?.open ?? dialogModule?.default?.open ?? (dialogModule as any)?.open;
 
         if (typeof openFn === 'function') {
@@ -167,7 +167,7 @@ export function GameModal({ onClose, gameToEdit }: { onClose: () => void; gameTo
                 type="text" 
                 value={executablePath}
                 onChange={(e) => setExecutablePath(e.target.value)}
-                placeholder="C:\\Games\\..."
+                placeholder="C:\Games\..."
                 className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
               <button

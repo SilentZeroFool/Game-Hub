@@ -55,15 +55,47 @@ jobs:
           # initialize tauri (use single-quoted CLI args to avoid nested quote problems)
           npx tauri init --app-name 'GameHub' --window-title 'Game Hub' --frontend-dist '../dist' --dev-url 'http://localhost:3000' --before-build-command 'npm run build' --before-dev-command 'npm run dev'
 
-          # edit tauri.conf.json reliably using node
-          node -e 'const fs = require("fs"); const f = "src-tauri/tauri.conf.json"; let c = fs.readFileSync(f, "utf8"); c = c.replace(/com\.tauri\.dev/g, "com.gamehub.app"); let conf = JSON.parse(c); conf.plugins = conf.plugins || {}; conf.plugins.shell = conf.plugins.shell || {}; conf.plugins.shell.open = true; fs.writeFileSync(f, JSON.stringify(conf, null, 2));'
-
           # add plugins
           npx tauri add dialog
           npx tauri add shell
+
+          # edit tauri.conf.json reliably using node (AFTER plugins are added)
+          node -e 'const fs = require("fs"); const f = "src-tauri/tauri.conf.json"; let c = fs.readFileSync(f, "utf8"); c = c.replace(/com\.tauri\.dev/g, "com.gamehub.app"); let conf = JSON.parse(c); conf.plugins = conf.plugins || {}; conf.plugins.shell = conf.plugins.shell || {}; conf.plugins.shell.open = true; fs.writeFileSync(f, JSON.stringify(conf, null, 2));'
           
           # allow shell open for all files
           node -e 'const fs = require("fs"); const f = "src-tauri/capabilities/default.json"; if (fs.existsSync(f)) { let cap = JSON.parse(fs.readFileSync(f, "utf8")); cap.permissions.push({ identifier: "shell:allow-open", allow: [{ path: "**" }] }); fs.writeFileSync(f, JSON.stringify(cap, null, 2)); }'
+
+          # write custom lib.rs with run_game command
+          $libRsContent = @"
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+use std::process::Command;
+use std::path::Path;
+
+#[tauri::command]
+fn run_game(path: String) -> Result<(), String> {
+  let p = Path::new(&path);
+  if !p.exists() {
+    return Err(format!("Exe not found: {}", path));
+  }
+  let dir = p.parent().unwrap_or_else(|| Path::new("."));
+  match Command::new(&path).current_dir(dir).spawn() {
+    Ok(_) => Ok(()),
+    Err(e) => Err(format!("Failed to spawn '{}': {}", path, e))
+  }
+}
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+  tauri::Builder::default()
+    .invoke_handler(tauri::generate_handler![run_game])
+    .setup(|app| {
+      Ok(())
+    })
+    .run(tauri::generate_context!())
+    .expect("error while running tauri application");
+}
+"@
+          Set-Content -Path src-tauri/src/lib.rs -Value $libRsContent -Encoding UTF8
 
           # build the Tauri app
           npx tauri build

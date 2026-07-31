@@ -16,7 +16,7 @@ export function ActiveSessionModal() {
       processRef.current = null;
       return;
     }
-
+    
     let isMounted = true;
 
     const launchGame = async () => {
@@ -36,7 +36,7 @@ export function ActiveSessionModal() {
         }
 
         // Prefer using the front-end shell.open so Windows handles opening the exe/shortcut.
-        const shellModule = await import('@tauri-apps/api/shell').catch(() => null);
+        const shellModule = await import('@tauri-apps/plugin-shell').catch(() => null);
         const openFn = shellModule?.open ?? (shellModule as any)?.default?.open ?? shellModule?.default;
 
         if (typeof openFn === 'function') {
@@ -54,8 +54,9 @@ export function ActiveSessionModal() {
           }
         } else {
           // Fallback: try invoke run_game (Rust) if shell.open isn't available
-          const tauriModule = await import('@tauri-apps/api/tauri').catch(() => null);
-          const invoke = tauriModule?.invoke ?? (tauriModule as any)?.default?.invoke;
+          const coreModule = await import('@tauri-apps/api/core').catch(() => null);
+          const invoke = coreModule?.invoke ?? (coreModule as any)?.default?.invoke;
+          
           if (typeof invoke === 'function') {
             await invoke('run_game', { path: exePath });
           } else {
@@ -73,7 +74,7 @@ export function ActiveSessionModal() {
     const interval = setInterval(() => {
       setElapsed(Math.floor((Date.now() - activeSession.startTime) / 1000));
     }, 1000);
-
+    
     return () => {
       isMounted = false;
       clearInterval(interval);
@@ -85,40 +86,40 @@ export function ActiveSessionModal() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm p-4">
       <div className="w-full max-w-sm rounded-2xl border border-primary/20 bg-card p-8 shadow-2xl relative animate-in fade-in zoom-in duration-300 text-center flex flex-col items-center">
-
-          <div className="relative mb-6">
-            <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
-            <div className="h-24 w-24 rounded-full border-4 border-background overflow-hidden relative z-10 mx-auto shadow-xl">
-              {activeSession.game.coverUrl ? (
-                <img src={activeSession.game.coverUrl} alt="Cover" className="h-full w-full object-cover" />
-              ) : (
-                <div className="h-full w-full bg-secondary flex items-center justify-center">
-                  <Loader2 className="animate-spin text-primary" />
-                </div>
-              )}
-            </div>
+        
+        <div className="relative mb-6">
+          <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
+          <div className="h-24 w-24 rounded-full border-4 border-background overflow-hidden relative z-10 mx-auto shadow-xl">
+            {activeSession.game.coverUrl ? (
+              <img src={activeSession.game.coverUrl} alt="Cover" className="h-full w-full object-cover" />
+            ) : (
+              <div className="h-full w-full bg-secondary flex items-center justify-center">
+                <Loader2 className="animate-spin text-primary" />
+              </div>
+            )}
           </div>
+        </div>
+        
+        <h2 className="text-2xl font-bold mb-1">{activeSession.game.title}</h2>
+        <p className="text-muted-foreground mb-6 flex items-center justify-center gap-2">
+          <Loader2 className="animate-spin h-4 w-4" /> Running...
+        </p>
 
-          <h2 className="text-2xl font-bold mb-1">{activeSession.game.title}</h2>
-          <p className="text-muted-foreground mb-6 flex items-center justify-center gap-2">
-            <Loader2 className="animate-spin h-4 w-4" /> Running...
-          </p>
+        {errorMsg && (
+          <p className="text-destructive text-sm font-medium mb-4">{errorMsg}</p>
+        )}
 
-          {errorMsg && (
-            <p className="text-destructive text-sm font-medium mb-4">{errorMsg}</p>
-          )}
+        <div className="text-4xl font-mono tracking-wider mb-8 text-primary font-bold">
+          {formatDuration(elapsed)}
+        </div>
 
-          <div className="text-4xl font-mono tracking-wider mb-8 text-primary font-bold">
-            {formatDuration(elapsed)}
-          </div>
-
-          <button 
-            onClick={stopGame}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-destructive py-3 text-base font-semibold text-destructive-foreground shadow-sm hover:bg-destructive/90 transition-colors"
-          >
-            <Square fill="currentColor" size={18} />
-            Stop & Save Session
-          </button>
+        <button 
+          onClick={stopGame}
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-destructive py-3 text-base font-semibold text-destructive-foreground shadow-sm hover:bg-destructive/90 transition-all hover:scale-105"
+        >
+          <Square fill="currentColor" size={18} />
+          Stop & Save Session
+        </button>
       </div>
     </div>
   );
