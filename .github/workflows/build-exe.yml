@@ -67,34 +67,34 @@ jobs:
 
           # write custom lib.rs with run_game command
           $libRsContent = @"
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-use std::process::Command;
-use std::path::Path;
+          #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+          use std::process::Command;
+          use std::path::Path;
 
-#[tauri::command]
-fn run_game(path: String) -> Result<(), String> {
-  let p = Path::new(&path);
-  if !p.exists() {
-    return Err(format!("Exe not found: {}", path));
-  }
-  let dir = p.parent().unwrap_or_else(|| Path::new("."));
-  match Command::new(&path).current_dir(dir).spawn() {
-    Ok(_) => Ok(()),
-    Err(e) => Err(format!("Failed to spawn '{}': {}", path, e))
-  }
-}
+          #[tauri::command]
+          fn run_game(path: String) -> Result<(), String> {
+            let p = Path::new(&path);
+            if !p.exists() {
+              return Err(format!("Exe not found: {}", path));
+            }
+            let dir = p.parent().unwrap_or_else(|| Path::new("."));
+            match Command::new(&path).current_dir(dir).spawn() {
+              Ok(_) => Ok(()),
+              Err(e) => Err(format!("Failed to spawn '{}': {}", path, e))
+            }
+          }
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
-  tauri::Builder::default()
-    .invoke_handler(tauri::generate_handler![run_game])
-    .setup(|app| {
-      Ok(())
-    })
-    .run(tauri::generate_context!())
-    .expect("error while running tauri application");
-}
-"@
+          #[cfg_attr(mobile, tauri::mobile_entry_point)]
+          pub fn run() {
+            tauri::Builder::default()
+              .invoke_handler(tauri::generate_handler![run_game])
+              .setup(|app| {
+                Ok(())
+              })
+              .run(tauri::generate_context!())
+              .expect("error while running tauri application");
+          }
+          "@
           Set-Content -Path src-tauri/src/lib.rs -Value $libRsContent -Encoding UTF8
 
           # build the Tauri app
