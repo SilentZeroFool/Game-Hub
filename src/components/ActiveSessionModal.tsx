@@ -36,34 +36,44 @@ export function ActiveSessionModal() {
           return;
         }
 
-        // Prefer using the front-end shell.open so Windows handles opening the exe/shortcut.
-        const shellModule = await import('@tauri-apps/plugin-shell').catch(() => null);
-        const openFn = shellModule?.open ?? (shellModule as any)?.default?.open ?? shellModule?.default;
-
-        if (typeof openFn === 'function') {
+        if (exePath.toLowerCase().endsWith('.exe')) {
           try {
-            // open() accepts a path and lets the OS handle how to open it (works for exe and shortcuts)
-            await openFn(exePath);
-          } catch (shellErr) {
-            console.warn('shell.open failed, trying fallback invoke run_game:', shellErr);
             await invoke('run_game', { path: exePath });
-          }
-
-          // minimize if requested
-          if (userSettings.closeOnLaunch) {
-            const windowModule = await import('@tauri-apps/api/window').catch(() => null);
-            const getCurrentWindow = windowModule?.getCurrentWindow ?? (windowModule as any)?.default?.getCurrentWindow;
-            if (typeof getCurrentWindow === 'function') {
-              const w = getCurrentWindow();
-              if (w?.minimize) await w.minimize();
-            }
+          } catch (err: any) {
+            console.warn('run_game failed:', err);
+            setErrorMsg(`Failed to launch: ${err?.message ?? String(err)}`);
+            return;
           }
         } else {
-          // Fallback: try invoke run_game (Rust) if shell.open isn't available
-          try {
-            await invoke('run_game', { path: exePath });
-          } catch (e: any) {
-            setErrorMsg(`Fallback launch failed: ${e?.message ?? String(e)}`);
+          // Fallback to shell.open for shortcuts (.lnk, .url, etc)
+          const shellModule = await import('@tauri-apps/plugin-shell').catch(() => null);
+          const openFn = shellModule?.open ?? (shellModule as any)?.default?.open ?? shellModule?.default;
+  
+          if (typeof openFn === 'function') {
+            try {
+              // open() accepts a path and lets the OS handle how to open it (works for exe and shortcuts)
+              await openFn(exePath);
+            } catch (shellErr) {
+              console.warn('shell.open failed, trying fallback invoke run_game:', shellErr);
+              await invoke('run_game', { path: exePath });
+            }
+          } else {
+            try {
+              await invoke('run_game', { path: exePath });
+            } catch (e: any) {
+              setErrorMsg(`Fallback launch failed: ${e?.message ?? String(e)}`);
+              return;
+            }
+          }
+        }
+
+        // minimize if requested
+        if (userSettings.closeOnLaunch) {
+          const windowModule = await import('@tauri-apps/api/window').catch(() => null);
+          const getCurrentWindow = windowModule?.getCurrentWindow ?? (windowModule as any)?.default?.getCurrentWindow;
+          if (typeof getCurrentWindow === 'function') {
+            const w = getCurrentWindow();
+            if (w?.minimize) await w.minimize();
           }
         }
       } catch (err: any) {
