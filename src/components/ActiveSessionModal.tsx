@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Loader2, Square } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { formatDuration } from '../lib/utils';
+import { isTauri, invoke } from '@tauri-apps/api/core';
 
 export function ActiveSessionModal() {
   const { activeSession, stopGame, userSettings } = useAppContext();
@@ -27,8 +28,8 @@ export function ActiveSessionModal() {
           return;
         }
 
-        // Detect Tauri environment at runtime (avoid static imports)
-        const isTauriEnv = typeof (window as any).__TAURI__ !== 'undefined' || (typeof navigator !== 'undefined' && /Tauri/i.test(navigator.userAgent));
+        // Detect Tauri environment at runtime
+        const isTauriEnv = isTauri();
 
         if (!isTauriEnv) {
           setErrorMsg('Launching is only supported in the Tauri desktop application.');
@@ -54,13 +55,10 @@ export function ActiveSessionModal() {
           }
         } else {
           // Fallback: try invoke run_game (Rust) if shell.open isn't available
-          const coreModule = await import('@tauri-apps/api/core').catch(() => null);
-          const invoke = coreModule?.invoke ?? (coreModule as any)?.default?.invoke;
-          
-          if (typeof invoke === 'function') {
+          try {
             await invoke('run_game', { path: exePath });
-          } else {
-            setErrorMsg('No available API to launch the game in this environment.');
+          } catch (e: any) {
+            setErrorMsg(`Fallback launch failed: ${e?.message ?? String(e)}`);
           }
         }
       } catch (err: any) {

@@ -2,17 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Gamepad2, FolderOpen } from 'lucide-react';
 import { Platform, Game } from '../types';
 import { useAppContext } from '../context/AppContext';
-
-async function detectTauri(): Promise<boolean> {
-  try {
-    if (typeof (window as any).__TAURI__ !== 'undefined') return true;
-    if (typeof navigator !== 'undefined' && /Tauri/i.test(navigator.userAgent)) return true;
-    const core = await import('@tauri-apps/api/core').catch(() => null);
-    return !!core?.isTauri;
-  } catch {
-    return false;
-  }
-}
+import { isTauri } from '@tauri-apps/api/core';
 
 export function GameModal({ onClose, gameToEdit }: { onClose: () => void; gameToEdit?: Game }) {
   const { addGame, updateGame } = useAppContext();
@@ -34,7 +24,7 @@ export function GameModal({ onClose, gameToEdit }: { onClose: () => void; gameTo
 
   const handleBrowse = async () => {
     try {
-      const isTauriEnv = await detectTauri();
+      const isTauriEnv = isTauri();
 
       if (isTauriEnv) {
         // Use the front-end API package for dialogs in renderer
