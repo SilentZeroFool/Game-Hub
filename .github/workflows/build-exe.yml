@@ -100,7 +100,7 @@ jobs:
           Set-Content -Path src-tauri/src/lib.rs -Value $libRsContent -Encoding UTF8
 
           # build the Tauri app
-          npx tauri build
+          npx tauri build --no-bundle
 
       - name: Upload Tauri Windows .exe Artifact
         uses: actions/upload-artifact@v4
