@@ -41,8 +41,13 @@ export function ActiveSessionModal() {
         const openFn = shellModule?.open ?? (shellModule as any)?.default?.open ?? shellModule?.default;
 
         if (typeof openFn === 'function') {
-          // open() accepts a path and lets the OS handle how to open it (works for exe and shortcuts)
-          await openFn(exePath);
+          try {
+            // open() accepts a path and lets the OS handle how to open it (works for exe and shortcuts)
+            await openFn(exePath);
+          } catch (shellErr) {
+            console.warn('shell.open failed, trying fallback invoke run_game:', shellErr);
+            await invoke('run_game', { path: exePath });
+          }
 
           // minimize if requested
           if (userSettings.closeOnLaunch) {

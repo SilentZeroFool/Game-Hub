@@ -60,7 +60,7 @@ jobs:
           npx tauri add shell
 
           # edit tauri.conf.json reliably using node (AFTER plugins are added)
-          node -e 'const fs = require("fs"); const f = "src-tauri/tauri.conf.json"; let c = fs.readFileSync(f, "utf8"); c = c.replace(/com\.tauri\.dev/g, "com.gamehub.app"); let conf = JSON.parse(c); conf.plugins = conf.plugins || {}; conf.plugins.shell = conf.plugins.shell || {}; conf.plugins.shell.open = true; fs.writeFileSync(f, JSON.stringify(conf, null, 2));'
+          node -e 'const fs = require("fs"); const f = "src-tauri/tauri.conf.json"; let c = fs.readFileSync(f, "utf8"); c = c.replace(/com\.tauri\.dev/g, "com.gamehub.app"); let conf = JSON.parse(c); conf.plugins = conf.plugins || {}; conf.plugins.shell = conf.plugins.shell || {}; conf.plugins.shell.open = "^.*$"; fs.writeFileSync(f, JSON.stringify(conf, null, 2));'
           
           # allow shell open for all files
           node -e 'const fs = require("fs"); const f = "src-tauri/capabilities/default.json"; if (fs.existsSync(f)) { let cap = JSON.parse(fs.readFileSync(f, "utf8")); cap.permissions.push({ identifier: "shell:allow-open", allow: [{ path: "**" }] }); fs.writeFileSync(f, JSON.stringify(cap, null, 2)); }'
