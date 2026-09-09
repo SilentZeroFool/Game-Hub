@@ -36,34 +36,34 @@ export function ActiveSessionModal() {
           return;
         }
 
-        if (exePath.toLowerCase().endsWith('.exe')) {
-          try {
-            await invoke('run_game', { path: exePath });
-          } catch (err: any) {
-            console.warn('run_game failed:', err);
-            setErrorMsg(`Failed to launch: ${err?.message ?? String(err)}`);
-            return;
-          }
-        } else {
-          // Fallback to shell.open for shortcuts (.lnk, .url, etc)
+        const method = activeSession.game.launchMethod || 'cmd_start';
+
+        if (method === 'tauri_shell') {
           const shellModule = await import('@tauri-apps/plugin-shell').catch(() => null);
           const openFn = shellModule?.open ?? (shellModule as any)?.default?.open ?? shellModule?.default;
   
           if (typeof openFn === 'function') {
             try {
-              // open() accepts a path and lets the OS handle how to open it (works for exe and shortcuts)
               await openFn(exePath);
             } catch (shellErr) {
               console.warn('shell.open failed, trying fallback invoke run_game:', shellErr);
-              await invoke('run_game', { path: exePath });
+              await invoke('run_game', { path: exePath, method: 'cmd_start' });
             }
           } else {
             try {
-              await invoke('run_game', { path: exePath });
+              await invoke('run_game', { path: exePath, method: 'cmd_start' });
             } catch (e: any) {
               setErrorMsg(`Fallback launch failed: ${e?.message ?? String(e)}`);
               return;
             }
+          }
+        } else {
+          try {
+            await invoke('run_game', { path: exePath, method });
+          } catch (err: any) {
+            console.warn('run_game failed:', err);
+            setErrorMsg(`Failed to launch: ${err?.message ?? String(err)}`);
+            return;
           }
         }
 

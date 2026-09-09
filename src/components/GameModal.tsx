@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Gamepad2, FolderOpen } from 'lucide-react';
-import { Platform, Game } from '../types';
+import { Platform, Game, LaunchMethod } from '../types';
 import { useAppContext } from '../context/AppContext';
 import { isTauri } from '@tauri-apps/api/core';
 
@@ -11,6 +11,7 @@ export function GameModal({ onClose, gameToEdit }: { onClose: () => void; gameTo
   const [coverUrl, setCoverUrl] = useState(gameToEdit?.coverUrl || '');
   const [executablePath, setExecutablePath] = useState(gameToEdit?.executablePath || '');
   const [category, setCategory] = useState(gameToEdit?.category || '');
+  const [launchMethod, setLaunchMethod] = useState<LaunchMethod>(gameToEdit?.launchMethod || 'cmd_start');
 
   useEffect(() => {
     if (gameToEdit) {
@@ -19,6 +20,9 @@ export function GameModal({ onClose, gameToEdit }: { onClose: () => void; gameTo
       setCoverUrl(gameToEdit.coverUrl);
       setExecutablePath(gameToEdit.executablePath);
       setCategory(gameToEdit.category || '');
+      if (gameToEdit.launchMethod) {
+        setLaunchMethod(gameToEdit.launchMethod);
+      }
     }
   }, [gameToEdit]);
 
@@ -71,6 +75,7 @@ export function GameModal({ onClose, gameToEdit }: { onClose: () => void; gameTo
         coverUrl: finalCoverUrl,
         executablePath: executablePath.trim() || 'dummy://path',
         category: category.trim() || 'Uncategorized',
+        launchMethod,
       });
     } else {
       addGame({
@@ -79,6 +84,7 @@ export function GameModal({ onClose, gameToEdit }: { onClose: () => void; gameTo
         coverUrl: finalCoverUrl,
         executablePath: executablePath.trim() || 'dummy://path',
         category: category.trim() || 'Uncategorized',
+        launchMethod,
       });
     }
     onClose();
@@ -170,6 +176,21 @@ export function GameModal({ onClose, gameToEdit }: { onClose: () => void; gameTo
               </button>
             </div>
             <p className="text-xs text-muted-foreground mt-1">In this web prototype, launching is simulated. In the Tauri desktop build, it will launch the game.</p>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Launch Method</label>
+            <select
+              value={launchMethod}
+              onChange={(e) => setLaunchMethod(e.target.value as LaunchMethod)}
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            >
+              <option value="cmd_start">Standard (cmd start) - Recommended</option>
+              <option value="direct">Direct Process (Fixes some Unity games)</option>
+              <option value="explorer">Explorer Shell</option>
+              <option value="tauri_shell">Tauri Shell</option>
+            </select>
+            <p className="text-xs text-muted-foreground mt-1">If a game fails to start or lags, try changing this option.</p>
           </div>
 
           <button 

@@ -1,5 +1,6 @@
 export type Platform = 'steam' | 'epic' | 'gog' | 'other';
 export type Theme = 'system' | 'light' | 'dark' | 'neon';
+export type LaunchMethod = 'cmd_start' | 'direct' | 'explorer' | 'tauri_shell';
 
 export interface Game {
   id: string;
@@ -7,6 +8,7 @@ export interface Game {
   platform: Platform;
   coverUrl: string;
   executablePath: string;
+  launchMethod?: LaunchMethod;
   addedAt: number;
   isFavorite?: boolean;
   category?: string;
