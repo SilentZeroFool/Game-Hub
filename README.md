@@ -568,6 +568,12 @@ npm run tauri build
 
 Creates an installer in `src-tauri/target/release/bundle/`.
 
+#### 🤖 Automated Builds via GitHub Actions
+We've set up an automated CI/CD pipeline using GitHub Actions! You don't need to manually build the `.exe` yourself.
+1. Any time you push code to the `main` branch on GitHub, an automated runner will build the Tauri application in the background.
+2. Go to the **Actions** tab on your GitHub repository.
+3. Click the latest successful build and download the `GameHub-Tauri-Exe` artifact to get your ready-to-run `.exe`!
+
 ---
 
 ## 📝 Available Scripts
@@ -629,6 +635,13 @@ npm run clean        # Remove dist/ and build artifacts
 3. Run Tauri as Administrator (if needed)
 4. Check `src-tauri/capabilities/default.json` includes shell:allow-open
 
+### Windows Defender flags the Game Hub .exe
+❌ **Issue**: Windows Defender SmartScreen blocks the application or flags it as malicious.
+✅ **Solution**: 
+- This is entirely normal for custom `.exe` files built from GitHub Actions that aren't digitally signed with an EV Code Signing certificate.
+- Click **"More info"** and then **"Run anyway"** in the SmartScreen prompt.
+- If Windows Defender quarantines the file, go to Windows Security > Virus & threat protection > Protection history, restore the file, and add it to your exclusions list.
+
 ### Drag-and-drop not working
 ❌ **Issue**: dnd-kit needs proper DOM structure
 ✅ **Solution**: 
@@ -685,7 +698,7 @@ This project is part of the Google AI Studio template repository. See LICENSE fo
 
 ## 🎓 Learning Resources
 
-- **Tauri Docs**: https://tauri.app/v1/guide/
+- **Tauri Docs**: https://v2.tauri.app/
 - **React Context API**: https://react.dev/reference/react/useContext
 - **TypeScript**: https://www.typescriptlang.org/docs/
 - **Tailwind CSS**: https://tailwindcss.com/docs
