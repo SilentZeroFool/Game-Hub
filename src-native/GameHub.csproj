@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>GameHub</RootNamespace>
+    <AssemblyName>GameHub</AssemblyName>
+    <AssemblyTitle>Game Hub</AssemblyTitle>
+    <Product>Game Hub</Product>
+    <Company>Game Hub</Company>
+    <Description>Pure Native Windows Game Launcher and Library Manager</Description>
+    <Version>1.0.0</Version>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="app.zip" Condition="Exists('app.zip')" />
+  </ItemGroup>
+</Project>

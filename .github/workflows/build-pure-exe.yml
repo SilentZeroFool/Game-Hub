@@ -1,0 +1,108 @@
+name: Build Pure Native Windows Executable (.exe)
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Publish as a GitHub Release draft'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-pure-exe:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Clean npm artifacts (workaround for Windows runner optional deps)
+        shell: pwsh
+        run: |
+          if (Test-Path node_modules) { Remove-Item -Recurse -Force node_modules }
+          if (Test-Path package-lock.json) { Remove-Item -Force package-lock.json }
+
+      - name: Install Node dependencies
+        shell: pwsh
+        run: |
+          npm install
+          try {
+            npm install -D @rollup/rollup-win32-x64-msvc
+          } catch {
+            Write-Host "Optional rollup binary installation skipped or already satisfied."
+          }
+
+      - name: Build Web Application (Vite)
+        run: npm run build
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Bundle Web Assets into Embedded Archive
+        shell: pwsh
+        run: |
+          if (-not (Test-Path src-native)) { New-Item -ItemType Directory -Path src-native }
+          Compress-Archive -Path dist/* -DestinationPath src-native/app.zip -Force
+          Write-Host "Web assets successfully bundled into src-native/app.zip"
+
+      - name: Build Self-Contained Single-File Executable (Zero Prerequisites)
+        shell: pwsh
+        run: |
+          dotnet publish src-native/GameHub.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:EnableCompressionInSingleFile=true `
+            -o ./dist-standalone
+          Rename-Item -Path ./dist-standalone/GameHub.exe -NewName GameHub-Standalone.exe
+
+      - name: Build Ultra-Lightweight Executable (Uses OS .NET Runtime)
+        shell: pwsh
+        run: |
+          dotnet publish src-native/GameHub.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained false `
+            -p:PublishSingleFile=true `
+            -p:EnableCompressionInSingleFile=false `
+            -o ./dist-lightweight
+          Rename-Item -Path ./dist-lightweight/GameHub.exe -NewName GameHub-Lightweight.exe
+
+      - name: Upload Standalone .exe Artifact (Recommended)
+        uses: actions/upload-artifact@v4
+        with:
+          name: GameHub-Pure-Native-Standalone
+          path: ./dist-standalone/GameHub-Standalone.exe
+          if-no-files-found: error
+
+      - name: Upload Lightweight .exe Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GameHub-Pure-Native-Lightweight
+          path: ./dist-lightweight/GameHub-Lightweight.exe
+          if-no-files-found: error
+
+      - name: Publish GitHub Release Draft (When Enabled)
+        if: github.event.inputs.create_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          name: "Game Hub v${{ github.run_number }} (Pure Native Windows)"
+          tag_name: "v${{ github.run_number }}"
+          files: |
+            ./dist-standalone/GameHub-Standalone.exe
+            ./dist-lightweight/GameHub-Lightweight.exe

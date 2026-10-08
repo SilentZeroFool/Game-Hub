@@ -569,10 +569,25 @@ npm run tauri build
 Creates an installer in `src-tauri/target/release/bundle/`.
 
 #### 🤖 Automated Builds via GitHub Actions
-We've set up an automated CI/CD pipeline using GitHub Actions! You don't need to manually build the `.exe` yourself.
-1. Any time you push code to the `main` branch on GitHub, an automated runner will build the Tauri application in the background.
-2. Go to the **Actions** tab on your GitHub repository.
-3. Click the latest successful build and download the `GameHub-Tauri-Exe` artifact to get your ready-to-run `.exe`!
+We've set up two automated CI/CD pipelines using GitHub Actions so you can test both approaches:
+
+1. **Option A: Pure Native Windows (.NET 8 & WebView2 - No Tauri / No Rust)**
+   - Located at: `.github/workflows/build-pure-exe.yml`
+   - Produces two single-file executables:
+     - `GameHub-Standalone.exe`: Self-contained with zero runtime dependencies.
+     - `GameHub-Lightweight.exe`: Ultra-compact executable using the OS .NET runtime.
+   - Built with Microsoft Edge WebView2, native Windows file dialogs, and isolated shell execution.
+   - Download artifact: **`GameHub-Pure-Native-Standalone`** or **`GameHub-Pure-Native-Lightweight`**
+
+2. **Option B: Tauri v2 Windows (.exe)**
+   - Located at: `.github/workflows/build-exe.yml`
+   - Built with Tauri v2 and Rust backend.
+   - Download artifact: **`GameHub-Tauri-Exe`**
+
+To download either build:
+1. Go to the **Actions** tab on your GitHub repository.
+2. Select either **"Build Pure Native Windows Executable (.exe)"** or **"Build Windows Executables (.exe)"**.
+3. Click the latest run and download the corresponding artifact! You can also trigger the Native workflow manually with the "Publish as a GitHub Release draft" checkbox enabled to draft a release.
 
 ---
 

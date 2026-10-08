@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Gamepad2, FolderOpen } from 'lucide-react';
 import { Platform, Game, LaunchMethod } from '../types';
 import { useAppContext } from '../context/AppContext';
-import { isTauri } from '@tauri-apps/api/core';
+import { browseExecutableFile, isDesktopApp } from '../lib/nativeBridge';
 
 export function GameModal({ onClose, gameToEdit }: { onClose: () => void; gameToEdit?: Game }) {
   const { addGame, updateGame } = useAppContext();
@@ -28,37 +28,17 @@ export function GameModal({ onClose, gameToEdit }: { onClose: () => void; gameTo
 
   const handleBrowse = async () => {
     try {
-      const isTauriEnv = isTauri();
-
-      if (isTauriEnv) {
-        // Use the front-end API package for dialogs in renderer
-        const dialogModule = await import('@tauri-apps/plugin-dialog').catch(() => null);
-        const openFn = dialogModule?.open ?? dialogModule?.default?.open ?? (dialogModule as any)?.open;
-
-        if (typeof openFn === 'function') {
-          const selected = await openFn({
-            multiple: false,
-            filters: [
-              {
-                name: 'Executables',
-                extensions: ['exe', 'app', 'sh', 'bat', 'cmd'],
-              },
-            ],
-          });
-
-          if (selected && typeof selected === 'string') {
-            setExecutablePath(selected);
-          }
-        } else {
-          console.warn('Dialog API not available at runtime.');
-          alert('File browsing is not available (dialog API missing).');
+      if (isDesktopApp()) {
+        const selected = await browseExecutableFile();
+        if (selected) {
+          setExecutablePath(selected);
         }
       } else {
-        alert('File browsing is only available in the Tauri desktop application.');
+        alert('File browsing is available in desktop builds (Tauri or Pure Native Windows). In this web preview, please type or paste the path manually.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to open dialog:', err);
-      alert('Failed to open dialog. See console for details.');
+      alert(`Failed to browse file: ${err?.message ?? String(err)}`);
     }
   };
 

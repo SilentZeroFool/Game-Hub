@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Loader2, Square } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { formatDuration } from '../lib/utils';
-import { isTauri, invoke } from '@tauri-apps/api/core';
+import { isDesktopApp, launchGameNative, minimizeNativeWindow } from '../lib/nativeBridge';
 
 export function ActiveSessionModal() {
   const { activeSession, stopGame, userSettings } = useAppContext();
@@ -28,53 +28,18 @@ export function ActiveSessionModal() {
           return;
         }
 
-        // Detect Tauri environment at runtime
-        const isTauriEnv = isTauri();
-
-        if (!isTauriEnv) {
-          setErrorMsg('Launching is only supported in the Tauri desktop application.');
+        if (!isDesktopApp()) {
+          // If in web browser, simulate game session without throwing an error
+          console.info('Running in web environment: simulating game session.');
           return;
         }
 
         const method = activeSession.game.launchMethod || 'cmd_start';
-
-        if (method === 'tauri_shell') {
-          const shellModule = await import('@tauri-apps/plugin-shell').catch(() => null);
-          const openFn = shellModule?.open ?? (shellModule as any)?.default?.open ?? shellModule?.default;
-  
-          if (typeof openFn === 'function') {
-            try {
-              await openFn(exePath);
-            } catch (shellErr) {
-              console.warn('shell.open failed, trying fallback invoke run_game:', shellErr);
-              await invoke('run_game', { path: exePath, method: 'cmd_start' });
-            }
-          } else {
-            try {
-              await invoke('run_game', { path: exePath, method: 'cmd_start' });
-            } catch (e: any) {
-              setErrorMsg(`Fallback launch failed: ${e?.message ?? String(e)}`);
-              return;
-            }
-          }
-        } else {
-          try {
-            await invoke('run_game', { path: exePath, method });
-          } catch (err: any) {
-            console.warn('run_game failed:', err);
-            setErrorMsg(`Failed to launch: ${err?.message ?? String(err)}`);
-            return;
-          }
-        }
+        await launchGameNative(exePath, method);
 
         // minimize if requested
         if (userSettings.closeOnLaunch) {
-          const windowModule = await import('@tauri-apps/api/window').catch(() => null);
-          const getCurrentWindow = windowModule?.getCurrentWindow ?? (windowModule as any)?.default?.getCurrentWindow;
-          if (typeof getCurrentWindow === 'function') {
-            const w = getCurrentWindow();
-            if (w?.minimize) await w.minimize();
-          }
+          await minimizeNativeWindow();
         }
       } catch (err: any) {
         console.error('Failed to launch game:', err);
