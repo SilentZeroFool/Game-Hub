@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutGrid, BarChart2, Settings, Monitor, Moon, Sun } from 'lucide-react';
+import { LayoutGrid, BarChart2, Settings, Moon, Sun } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAppContext } from '../context/AppContext';
 
@@ -13,9 +13,17 @@ export function Sidebar({ currentTab, setCurrentTab }: SidebarProps) {
 
   return (
     <div className="flex h-screen w-64 flex-col border-r border-border/50 bg-card">
-      <div className="flex h-16 items-center px-6 border-b border-border/50">
-        <Monitor className="mr-3 h-6 w-6 text-primary" />
-        <h1 className="text-xl font-bold tracking-tight text-foreground">Hub</h1>
+      <div className="flex h-16 items-center px-5 border-b border-border/50 gap-3">
+        <img
+          src="/icon-192.png"
+          alt="Game Hub Logo"
+          referrerPolicy="no-referrer"
+          className="h-9 w-9 rounded-lg shadow-sm border border-border/40 object-cover"
+        />
+        <div className="flex flex-col">
+          <span className="text-base font-black tracking-wider text-foreground leading-none">GAME HUB</span>
+          <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Launcher</span>
+        </div>
       </div>
 
       <nav className="flex-1 space-y-2 p-4">

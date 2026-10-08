@@ -33,6 +33,7 @@ namespace GameHub
         public MainWindow()
         {
             Text = "Game Hub";
+            LoadAppIcon();
             ClientSize = new Size(1300, 820);
             MinimumSize = new Size(960, 600);
             StartPosition = FormStartPosition.CenterScreen;
@@ -325,6 +326,36 @@ namespace GameHub
             }
 
             return assetsDir;
+        }
+
+        private void LoadAppIcon()
+        {
+            try
+            {
+                var assembly = Assembly.GetExecutingAssembly();
+                using var stream = assembly.GetManifestResourceStream("GameHub.icon.ico");
+                if (stream != null)
+                {
+                    Icon = new Icon(stream);
+                    return;
+                }
+
+                string localIconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "icon.ico");
+                if (File.Exists(localIconPath))
+                {
+                    Icon = new Icon(localIconPath);
+                    return;
+                }
+
+                if (File.Exists("icon.ico"))
+                {
+                    Icon = new Icon("icon.ico");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Could not load application icon: {ex.Message}");
+            }
         }
     }
 }
